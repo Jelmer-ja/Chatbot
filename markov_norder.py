@@ -12,7 +12,7 @@ class Markov():
 
 	# Generate table
 	def generate_table(self, filename):
-		for line in open(filename): 
+		for line in open(filename):
 			for word in line.split():
 				self.table[tuple(self.seen)].append(word)
 				self.seen.append(word)
@@ -40,7 +40,7 @@ class Markov():
 
 
 m = Markov(order=3)
-
+print("President speech")
 #m.walk_directory('./pres-speech')
 m.walk_directory('./pres-speech/obama')
 m.generate_output(max_words=100)
