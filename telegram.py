@@ -7,6 +7,7 @@ import requests
 import time
 import urllib
 import config
+from dialogue import Dialogue
 # python3: urllib.parse.quote_plus
 # python2: urllib.pathname2url
 
@@ -41,11 +42,14 @@ def get_last_update_id(updates):
     return max(update_ids)
 
 
-def echo_all(updates):
+def respond(updates):
     for update in updates["result"]:
         text = update["message"]["text"]
         chat = update["message"]["chat"]["id"]
-        send_message(text, chat)
+        if (not dialogue.in_convos(chat)):
+            dialogue.add_chat(chat)
+        response = dialogue.reply(chat,text)
+        send_message(response, chat)
 
 
 def get_last_chat_id_and_text(updates):
@@ -64,11 +68,13 @@ def send_message(text, chat_id):
 
 def main():
     last_update_id = None
+    global dialogue
+    dialogue = Dialogue()
     while True:
         updates = get_updates(last_update_id)
         if len(updates["result"]) > 0:
             last_update_id = get_last_update_id(updates) + 1
-            echo_all(updates)
+            respond(updates)
         time.sleep(0.5)
 
 
