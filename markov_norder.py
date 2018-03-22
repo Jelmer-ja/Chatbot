@@ -41,8 +41,7 @@ class Markov():
                 # print('\t%s' % fname)
 
 
-m = Markov(order=3)
-print("President speech")
+#m = Markov(order=3)
 # m.walk_directory('./pres-speech')
-m.walk_directory('./pres-speech/obama')
-m.generate_output(max_words=100)
+#m.walk_directory('./pres-speech/obama')
+#m.generate_output(max_words=100)
