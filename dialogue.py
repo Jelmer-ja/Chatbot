@@ -1,6 +1,8 @@
 import numpy
 import random
+import ast
 from markov_norder import Markov
+from unidecode import unidecode
 import time
 
 #Conversations have three stages, 'OPENING', 'MIDDLE', and 'CLOSING' during which the
@@ -37,3 +39,13 @@ class Dialogue:
         elif(self.conversations[chat] == 'CLOSING'):
             response = random.choice(['Bye!','Goodbye!','Cya later!'])
         return response
+
+def import_movielines():
+
+    with open('cornell_movie_dialogs_corpus/movie_conversations.txt') as convf:
+        conversations = [x.split('+++$+++')[-1] for x in convf.readlines()]
+        conversations = [[n.strip() for n in ast.literal_eval(x[1:])] for x in conversations]
+    with open('cornell_movie_dialogs_corpus/movie_lines.txt') as linesf:
+        lines = [x.decode("utf-8").split('+++$+++')[-1] for x in linesf.readlines()]
+        linetuples = [(x[1],x[4]) for x in lines]
+    print(linetuples)
