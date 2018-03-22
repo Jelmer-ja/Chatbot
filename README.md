@@ -1,7 +1,7 @@
 # Chatbot
 
 We used the telegram bot as proposed in the assignment, called "Freek".
-We use the Cornell Movie Database (Cornell Movie Dialog Corpus) as training for our chatterbot chatbot.
+We use the Cornell Movie Database (Cornell Movie Dialog Corpus) as training for our chatterbot chatbot (https://pypi.python.org/pypi/ChatterBot/0.4.3).
 
 
 
