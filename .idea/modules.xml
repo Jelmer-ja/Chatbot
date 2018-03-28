@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Chatbot.iml" filepath="$PROJECT_DIR$/.idea/Chatbot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../TextClassifiction/.idea/TextClassifiction.iml" filepath="$PROJECT_DIR$/../TextClassifiction/.idea/TextClassifiction.iml" />
     </modules>
   </component>
 </project>

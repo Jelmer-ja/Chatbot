@@ -4,6 +4,9 @@ import ast
 from chatterbot import ChatBot
 from markov_norder import Markov
 from chatterbot.trainers import ListTrainer
+from bs4 import BeautifulSoup
+from bs4.element import Comment
+import cfscrape as cfs
 from unidecode import unidecode
 import time
 
@@ -17,7 +20,7 @@ class Dialogue:
         self.bot = ChatBot("Filmquotes")
         self.bot.set_trainer(ListTrainer)
         filmconvos = import_movielines()
-        for convo in filmconvos:
+        for convo in filmconvos[0:50]:
             self.bot.train(convo)
 
         #self.m = Markov()
@@ -42,8 +45,25 @@ class Dialogue:
             response = random.choice(['Hi','Hello','Hello there!','Hey','Hi there'])
             self.conversations[chat] = 'MIDDLE'
         elif(self.conversations[chat] == 'MIDDLE'):
-            #response = str(self.m.generate_output(max_words=40))
-            response = self.bot.get_response(text)
+            #If the message is a general question (not about the bot itself)
+            if('?' in text and 'you' not in text.lower()):
+                #Get answer from Google
+                #scraper = cfs.create_scraper()
+                #url = 'https://www.google.nl/search?q='
+                #for x in text.lower().split():
+                #    url += x + '+'
+                #url = url[:-2]
+                #page = scraper.get(url).content
+                #soup = BeautifulSoup(page, 'html.parser')
+                #[s.extract() for s in soup(['style', 'script', '[document]', 'head', 'title'])]
+                #readable_text = soup.getText().encode('utf-8',
+                #                                      'ignore')  # Extract the text from the html and convert it to ASCII
+                response = str(self.bot.get_response(text)) #readable_text
+                # Find and extract the rating
+                #rb = soup.find('strong')
+                #rating = float(rb.text.strip())  # strip() is used to remove starting and trailing
+            else:
+                response = str(self.bot.get_response(text))
         elif(self.conversations[chat] == 'CLOSING'):
             response = random.choice(['Bye!','Goodbye!','Cya later!'])
         return response
