@@ -14,6 +14,7 @@ import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 import gensim
 from gensim.models.doc2vec import TaggedDocument
+from nltk.corpus import stopwords
 
 
 #Conversations have three stages, 'OPENING', 'MIDDLE', and 'CLOSING' during which the
@@ -30,10 +31,14 @@ class Dialogue:
         #Code adapted from https://medium.com/scaleabout/a-gentle-introduction-to-doc2vec-db3e8c0cce5e
         #use by calling model.docvecs.most_similar(UNIQUE_ID, topn=5)
         #dm=1 means PV-DM, otherwise use PV-BOW
-        #sie = dimensionality of features
+        #size = dimensionality of features
         #Iput = TaggedDocument (words,lablels) should be iterable.
-        model = gensim.models.Doc2Vec(documents=conversation_iter,dm=0,size=10)
-        print("Model created")
+        model = gensim.models.Doc2Vec.load("Freeksmodel")
+            #gensim.models.Doc2Vec()#(documents=conversation_iter,dm=0,size=10)
+        print("Model loading")
+        #model.save("FreeksModel")
+        #model.load("FreeksModel")
+        print("\n model loaded \n")
         #model.train(filmconvos)
         for convo in filmconvos[0:50]:
             self.bot.train(convo)
@@ -82,7 +87,8 @@ class Dialogue:
         return response
 
 def import_movielines():
-
+    #print("creating corpus iterator")
+    corpus_iter = []
     with open('cornell_movie_dialogs_corpus/movie_conversations.txt') as convf:
         conversations = [x.split('+++$+++')[-1] for x in convf.readlines()]
         conversations = [[n.strip() for n in ast.literal_eval(x[1:])] for x in conversations]
@@ -91,6 +97,9 @@ def import_movielines():
         linedict = dict((x[0][:-1],x[4]) for x in lines)
     final_convos = [[linedict[x] for x in y] for y in conversations]
     #create corpus, possibly check for vocabulary (drop words not in it from sentence)
-    corpus_iter = lambda: (TaggedDocument([word for word in x[4]], x[0]) for x in lines for lines in conversations)
-    print(corpus_iter)
+    #stop = set(stopwords.words('english'))
+    #for key in linedict:
+    #    if linedict[key] not in stop:
+    #        corpus_iter.append(TaggedDocument(linedict[key][:-1].split(),key))
+    #print(corpus_iter)
     return final_convos,corpus_iter
