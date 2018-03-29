@@ -62,10 +62,13 @@ The user can also trigger this functionality at other moments in the conversatio
 ![alt text](https://i.imgur.com/E7nhSlo.png "Logo Title Text 1")
 
 ## Movie Quotation
-Because Freek knows so much about movies, he likes helping people getting them right. When he is asked to help with finishing or fixing a movie quote (e.g. a sentence inclusing quotation marks (") somewhere in the sentence) he uses a Gensim model trained using [Doc2Vec](https://radimrehurek.com/gensim/models/doc2vec.html) on the movie quotes. The quote input by the user is then compared with the model and the most similar quote is returned. Because training this model takes a lot of time, the training was done once and the resulting model was stored as 'FreeksModel' in the repo. 
+Because Freek knows so much about movies, he likes helping people getting them right. When he is asked to help with finishing or fixing a movie quote (e.g. a sentence inclusing quotation marks (") somewhere in the sentence) he uses a Gensim model trained using [Doc2Vec](https://radimrehurek.com/gensim/models/doc2vec.html) on the movie quotes. The quote input by the user is then compared with the model and the most similar quote is returned. Because training this model takes a lot of time, the training was done once and the resulting model was stored as 'FreeksModel' in the repo. Since the doc2vec model can only compare similarities between a document and another document that are part of the model, the (mis)quote entered by the user needs to be entered into the model. Adding to the model requires retraining the model again, which takes the better part of half an hour. This is too long for a normal conversation so the only option Freek has is to add the text as a inferred vector and compare this to the vectors of the sentences.
 ```python
-Code bla bla 
-
+    def get_movie_quote(self, text):
+        tag = "UniqueTag" + str(self.nr_last_tag+1)
+        self.nr_last_tag += 1
+        similars = model.docvecs.most_similar(positive=[model.infer_vector(text)])
+        return str(similars[0])
 ```
 ## Notes
 * UTF-8 didn't recognise characters like ('),(è),(,), etc. so we changed these manually before importing the Cornell database. We also had to remove the unicode characters from our news databases. 
