@@ -9,6 +9,12 @@ from bs4.element import Comment
 import cfscrape as cfs
 from unidecode import unidecode
 import time
+#Niet zeker of dit ook echt nodig is?
+import logging
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+import gensim
+from gensim.models.doc2vec import TaggedDocument
+
 
 #Conversations have three stages, 'OPENING', 'MIDDLE', and 'CLOSING' during which the
 #chatbot will respond differently to messages. Currently, the chatbot will greet his conversation partner,
@@ -19,7 +25,16 @@ class Dialogue:
         self.conversations = {}
         self.bot = ChatBot("Filmquotes")
         self.bot.set_trainer(ListTrainer)
-        filmconvos = import_movielines()
+        filmconvos,conversation_iter = import_movielines()
+        #also create doc2vec model
+        #Code adapted from https://medium.com/scaleabout/a-gentle-introduction-to-doc2vec-db3e8c0cce5e
+        #use by calling model.docvecs.most_similar(UNIQUE_ID, topn=5)
+        #dm=1 means PV-DM, otherwise use PV-BOW
+        #sie = dimensionality of features
+        #Iput = TaggedDocument (words,lablels) should be iterable.
+        model = gensim.models.Doc2Vec(documents=conversation_iter,dm=0,size=10)
+        print("Model created")
+        #model.train(filmconvos)
         for convo in filmconvos[0:50]:
             self.bot.train(convo)
 
@@ -49,7 +64,7 @@ class Dialogue:
             if('?' in text and 'you' not in text.lower()):
                 #Get answer from Google
                 scraper = cfs.create_scraper()
-                url = 'https://www.google.nl/search?q='
+                url = 'https://www.google.com/search?q='
                 for x in text.lower().split():
                     url += x + '+'
                 url = url[:-2]
@@ -75,4 +90,7 @@ def import_movielines():
         lines = [[x.split('+++$+++')][-1] for x in linesf.readlines()]
         linedict = dict((x[0][:-1],x[4]) for x in lines)
     final_convos = [[linedict[x] for x in y] for y in conversations]
-    return final_convos
+    #create corpus, possibly check for vocabulary (drop words not in it from sentence)
+    corpus_iter = lambda: (TaggedDocument([word for word in x[4]], x[0]) for x in lines for lines in conversations)
+    print(corpus_iter)
+    return final_convos,corpus_iter
