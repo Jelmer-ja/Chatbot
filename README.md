@@ -1,3 +1,5 @@
+Authors: Jesse Zwamboom (s4314182) & Jelmer Jansen (s4480848)
+
 # Chatbot
 
 We started out with the standard telegram bot as proposed in the assignment. Our chatbot is called called "Freek", and his Telegram username is "@fr33k_bot".
