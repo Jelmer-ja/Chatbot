@@ -39,7 +39,7 @@ class Dialogue:
         print("Model loading")
         #model.save("FreeksModel")
         #model.load("FreeksModel")
-        print("\n model loaded \n")
+        print("\nModel loaded \n")
         #model.train(filmconvos)
         for convo in filmconvos[0:50]:
             self.bot.train(convo)
@@ -80,13 +80,13 @@ class Dialogue:
         elif (self.conversations[chat] == 'MIDDLE'):
             # If the message is a general question (not about the bot itself)
             if ('?' in text and 'you' not in text.lower()):
-                divs = self.get_answer()
+                divs = self.get_answer(text)
                 if divs == []:
                     response = str(self.bot.get_response(text))
                 else:
                     answer = str(divs[0])[19:-6]
                     cg = NewsCorpusGenerator('temp_news_corpus', 'sqlite')
-                    links = cg.google_news_search('dogs', 'Standard', 10)
+                    links = cg.google_news_search(answer, 'Standard', 5)
                     cg.generate_corpus(links)
                     response = answer
             else:
