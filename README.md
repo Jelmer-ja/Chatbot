@@ -53,10 +53,10 @@ After Freek returns the answer to the question, Freek wants to show off his new 
                 return summary
         return ''
 ```
-
+The resulting conversations look something like this:
 ![alt text](https://i.imgur.com/KjfjwyW.png "Logo Title Text 1")
 
-The user can also trigger this functionality at other moments in the conversation by simply saying _"I'd like to hear some news about [TOPIC]"_ or any similar phrase. 
+The user can also trigger this functionality at other moments in the conversation by simply saying _"I'd like to hear some news about X"_ or any similar phrase. 
 
 ![alt text](https://i.imgur.com/E7nhSlo.png "Logo Title Text 1")
 
