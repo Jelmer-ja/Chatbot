@@ -67,6 +67,5 @@ Because Freek knows so much about movies, he likes helping people getting them r
 Code bla bla 
 
 ```
-
-# Notes
-* UTF-8 didn't recognise things like ('),(è),(,), etc. so we changed these manually before importing the Cornell database.
+## Notes
+* UTF-8 didn't recognise characters like ('),(è),(,), etc. so we changed these manually before importing the Cornell database. We also had to remove the unicode characters from our news databases. 
