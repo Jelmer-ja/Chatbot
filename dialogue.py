@@ -15,6 +15,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 import gensim
 from gensim.models.doc2vec import TaggedDocument
 from nltk.corpus import stopwords
+from news_corpus_builder import NewsCorpusGenerator
 
 
 #Conversations have three stages, 'OPENING', 'MIDDLE', and 'CLOSING' during which the
@@ -26,14 +27,14 @@ class Dialogue:
         self.conversations = {}
         self.bot = ChatBot("Filmquotes")
         self.bot.set_trainer(ListTrainer)
-        filmconvos,conversation_iter = import_movielines()
+        filmconvos = import_movielines()
         #also create doc2vec model
         #Code adapted from https://medium.com/scaleabout/a-gentle-introduction-to-doc2vec-db3e8c0cce5e
         #use by calling model.docvecs.most_similar(UNIQUE_ID, topn=5)
         #dm=1 means PV-DM, otherwise use PV-BOW
         #size = dimensionality of features
         #Iput = TaggedDocument (words,lablels) should be iterable.
-        model = gensim.models.Doc2Vec.load("Freeksmodel")
+        model = gensim.models.Doc2Vec.load('FreeksModel')
             #gensim.models.Doc2Vec()#(documents=conversation_iter,dm=0,size=10)
         print("Model loading")
         #model.save("FreeksModel")
@@ -52,38 +53,46 @@ class Dialogue:
     def add_chat(self,chat):
         self.conversations[chat] = 'OPENING'
 
-    def reply(self,chat,text):
+    def get_answer(self,text):
+        # Get answer from Google
+        scraper = cfs.create_scraper()
+        url = 'https://www.google.com/search?q='
+        for x in text.lower().split():
+            url += x + '+'
+        url = url[:-2]
+        page = scraper.get(url).content
+        soup = BeautifulSoup(page, 'html.parser')
+        divs = soup.findAll("div", {"class": "Z0LcW"})
+        return divs
+
+    def reply(self, chat, text):
         response = ''
 
-        #Check whether partner wants to end the conversation
-        goodbyes = ['see you later','cya','bye','goodbye','gotta go','later',]
-        if(True in [g in text.lower() for g in goodbyes]):
+        # Check whether partner wants to end the conversation
+        goodbyes = ['see you later', 'cya', 'bye', 'goodbye', 'gotta go', 'later', ]
+        if (True in [g in text.lower() for g in goodbyes]):
             self.conversations[chat] = 'CLOSING'
 
-        #Create a response
-        if(self.conversations[chat] == 'OPENING'):
-            response = random.choice(['Hi','Hello','Hello there!','Hey','Hi there'])
+        # Create a response
+        if (self.conversations[chat] == 'OPENING'):
+            response = random.choice(['Hi', 'Hello', 'Hello there!', 'Hey', 'Hi there'])
             self.conversations[chat] = 'MIDDLE'
-        elif(self.conversations[chat] == 'MIDDLE'):
-            #If the message is a general question (not about the bot itself)
-            if('?' in text and 'you' not in text.lower()):
-                #Get answer from Google
-                scraper = cfs.create_scraper()
-                url = 'https://www.google.com/search?q='
-                for x in text.lower().split():
-                    url += x + '+'
-                url = url[:-2]
-                page = scraper.get(url).content
-                soup = BeautifulSoup(page, 'html.parser')
-                divs = soup.findAll("div", {"class": "Z0LcW"})
+        elif (self.conversations[chat] == 'MIDDLE'):
+            # If the message is a general question (not about the bot itself)
+            if ('?' in text and 'you' not in text.lower()):
+                divs = self.get_answer()
                 if divs == []:
                     response = str(self.bot.get_response(text))
                 else:
-                    response = str(divs[0])[19:-6]
+                    answer = str(divs[0])[19:-6]
+                    cg = NewsCorpusGenerator('temp_news_corpus', 'sqlite')
+                    links = cg.google_news_search('dogs', 'Standard', 10)
+                    cg.generate_corpus(links)
+                    response = answer
             else:
                 response = str(self.bot.get_response(text))
-        elif(self.conversations[chat] == 'CLOSING'):
-            response = random.choice(['Bye!','Goodbye!','Cya later!'])
+        elif (self.conversations[chat] == 'CLOSING'):
+            response = random.choice(['Bye!', 'Goodbye!', 'Cya later!'])
         return response
 
 def import_movielines():
@@ -102,4 +111,4 @@ def import_movielines():
     #    if linedict[key] not in stop:
     #        corpus_iter.append(TaggedDocument(linedict[key][:-1].split(),key))
     #print(corpus_iter)
-    return final_convos,corpus_iter
+    return final_convos #,corpus_iter
