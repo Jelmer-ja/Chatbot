@@ -39,7 +39,7 @@ class Dialogue:
             #gensim.models.Doc2Vec()#(documents=conversation_iter,dm=0,size=10)
         print("Model loading")
         print("\nModel loaded \n")
-        for convo in filmconvos[0:50]:
+        for convo in filmconvos[0:2]:
             self.bot.train(convo)
 
     def in_convos(self,chat):
@@ -70,17 +70,21 @@ class Dialogue:
     def get_news_sentence(self,answer):
         #Create a database of news articles about the subject of te question
         cg = NewsCorpusGenerator('temp_news_corpus', 'sqlite')
-        links = cg.google_news_search(answer, 'Standard', 1)
+        links = cg.google_news_search(answer, 'Standard', 5)
         cg.generate_corpus(links)
         conn = sqlite3.connect('temp_news_corpus/corpus.db')
-        news_string = ''
+        news_strings = []
         for row in conn.execute('SELECT body FROM articles'):
-            news_string += str(row).decode('unicode_escape').encode('ascii','ignore')
-        output = summarize(news_string)
-
-        #Remove the database
-        os.remove('temp_news_corpus/corpus.db')
-        return output
+            news_strings.append(str(row).decode('unicode_escape').encode('ascii','ignore'))
+        os.remove('temp_news_corpus/corpus.db') # Remove the database
+        for n in news_strings[1:]:
+            summary = summarize(n)
+            if(summary != u"" and summary != []):
+                if(summary[0:3] == '(u"'):
+                    return summary[3:]
+                else:
+                    return summary
+        return ''
 
     def reply(self, chat, text):
         response = ''
@@ -96,15 +100,21 @@ class Dialogue:
             self.conversations[chat] = 'MIDDLE'
         elif (self.conversations[chat] == 'MIDDLE'):
             # If the message is a general question (not about the bot itself)
-            if ('?' in text and 'you' not in text.lower()):
-                print('I AM STILL RIGHT HERE')
+            if ('some news about' in text.lower()):
+                words = text.lower().split()
+                about_index = words.index('about')
+                subject = ''
+                for i in range(about_index + 1, len(words)):
+                    subject += words[i] + ' '
+                response = self.get_news_sentence(subject)
+            elif ('?' in text and 'you' not in text.lower()):
                 divs = self.get_answer(text)
                 if divs == []:
                     response = str(self.bot.get_response(text))
                 else:
                     self.answer = str(divs[0])[19:-6]
                     news_sentence = self.get_news_sentence(self.answer)
-                    response = self.answer[0].upper() + self.answer[1:] + '. Would you like to know more about ' + self.answer + ' ?'
+                    response = self.answer[0].upper() + self.answer[1:] + '. Would you like to hear some news about ' + self.answer + '?'
                     self.conversations[chat] = 'QUESTION'
             else:
                 response = str(self.bot.get_response(text))
