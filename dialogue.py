@@ -2,17 +2,15 @@ import numpy
 import random
 import ast
 from chatterbot import ChatBot
-from markov_norder import Markov
 from chatterbot.trainers import ListTrainer
 from bs4 import BeautifulSoup
-from bs4.element import Comment
 import cfscrape as cfs
-from unidecode import unidecode
-import time
-#Niet zeker of dit ook echt nodig is?
+import sqlite3
 import logging
+import os
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 import gensim
+from gensim.summarization.summarizer import summarize
 from gensim.models.doc2vec import TaggedDocument
 from nltk.corpus import stopwords
 from news_corpus_builder import NewsCorpusGenerator
@@ -25,6 +23,8 @@ from news_corpus_builder import NewsCorpusGenerator
 class Dialogue:
     def __init__(self):
         self.conversations = {}
+        self.nr_last_tag = 1.0
+        self.answer = None
         self.bot = ChatBot("Filmquotes")
         self.bot.set_trainer(ListTrainer)
         filmconvos = import_movielines()
@@ -34,18 +34,13 @@ class Dialogue:
         #dm=1 means PV-DM, otherwise use PV-BOW
         #size = dimensionality of features
         #Iput = TaggedDocument (words,lablels) should be iterable.
+        global model
         model = gensim.models.Doc2Vec.load('FreeksModel')
             #gensim.models.Doc2Vec()#(documents=conversation_iter,dm=0,size=10)
         print("Model loading")
-        #model.save("FreeksModel")
-        #model.load("FreeksModel")
         print("\nModel loaded \n")
-        #model.train(filmconvos)
         for convo in filmconvos[0:50]:
             self.bot.train(convo)
-
-        #self.m = Markov()
-        #self.m.walk_directory('clinton-trump-corpus/Trump')
 
     def in_convos(self,chat):
         return chat in self.conversations
@@ -53,17 +48,39 @@ class Dialogue:
     def add_chat(self,chat):
         self.conversations[chat] = 'OPENING'
 
+    def get_movie_quote(self, text):
+        tag = "UniqueTag" + str(self.nr_last_tag)
+        self.nr_last_tag += 1
+        model.train(TaggedDocument(text.split(), tag))
+        print(model.docvecs.most_similar(tag))
+        return text
+
     def get_answer(self,text):
         # Get answer from Google
         scraper = cfs.create_scraper()
-        url = 'https://www.google.com/search?q='
+        url = 'https://www.google.co.uk/search?q='#client=ubuntu&channel=fs&q='
         for x in text.lower().split():
             url += x + '+'
         url = url[:-2]
         page = scraper.get(url).content
-        soup = BeautifulSoup(page, 'html.parser')
+        soup = BeautifulSoup(page, "html.parser")
         divs = soup.findAll("div", {"class": "Z0LcW"})
         return divs
+
+    def get_news_sentence(self,answer):
+        #Create a database of news articles about the subject of te question
+        cg = NewsCorpusGenerator('temp_news_corpus', 'sqlite')
+        links = cg.google_news_search(answer, 'Standard', 1)
+        cg.generate_corpus(links)
+        conn = sqlite3.connect('temp_news_corpus/corpus.db')
+        news_string = ''
+        for row in conn.execute('SELECT body FROM articles'):
+            news_string += str(row).decode('unicode_escape').encode('ascii','ignore')
+        output = summarize(news_string)
+
+        #Remove the database
+        os.remove('temp_news_corpus/corpus.db')
+        return output
 
     def reply(self, chat, text):
         response = ''
@@ -80,17 +97,23 @@ class Dialogue:
         elif (self.conversations[chat] == 'MIDDLE'):
             # If the message is a general question (not about the bot itself)
             if ('?' in text and 'you' not in text.lower()):
+                print('I AM STILL RIGHT HERE')
                 divs = self.get_answer(text)
                 if divs == []:
                     response = str(self.bot.get_response(text))
                 else:
-                    answer = str(divs[0])[19:-6]
-                    cg = NewsCorpusGenerator('temp_news_corpus', 'sqlite')
-                    links = cg.google_news_search(answer, 'Standard', 5)
-                    cg.generate_corpus(links)
-                    response = answer
+                    self.answer = str(divs[0])[19:-6]
+                    news_sentence = self.get_news_sentence(self.answer)
+                    response = self.answer[0].upper() + self.answer[1:] + '. Would you like to know more about ' + self.answer + ' ?'
+                    self.conversations[chat] = 'QUESTION'
             else:
                 response = str(self.bot.get_response(text))
+        elif (self.conversations[chat] == 'QUESTION'):
+            if text.lower() in ['yeah','yes','absolutely','yes.','yes?','yeah!','yes!']:
+                response = self.get_news_sentence(self.answer)
+            else:
+                response = 'Okay.'
+            self.conversations[chat] = 'MIDDLE'
         elif (self.conversations[chat] == 'CLOSING'):
             response = random.choice(['Bye!', 'Goodbye!', 'Cya later!'])
         return response
