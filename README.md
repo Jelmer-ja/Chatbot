@@ -38,7 +38,11 @@ if('?' in text and 'you' not in text.lower()):
 ```
 
 ## Movie Quotation
+Because Freek knows so much about movies, he likes helping people getting them right. When he is asked to help with finishing or fixing a movie quote (e.g. a question including the word "quote" and a quoted message''/"") he uses a Gensim model trained using [Doc2Vec](https://radimrehurek.com/gensim/models/doc2vec.html) on the movie quotes. The quote input by the user is then compared with the model and the most similar quote is returned.
+```python
+Code bla bla 
 
+```
 
 # Notes
 * UTF-8 didn't recognise things like ('),(è),(,), etc. so we changed these manually before importing the Cornell database.
