@@ -10,7 +10,7 @@ Freek is a rather dramatic chatbot. His standard dialogue interactions are taken
 ## Basic Question Answering
 Although Freek likes movies a lot, he is not very knowledgeable about anything else. Thus, he refers to Google when he is asked questions that don't refer to him specifically. 
 
-´´´
+```
 if('?' in text and 'you' not in text.lower()):
                 #Get answer from Google
                 scraper = cfs.create_scraper()
@@ -25,7 +25,7 @@ if('?' in text and 'you' not in text.lower()):
                     response = str(self.bot.get_response(text))
                 else:
                     response = str(divs[0])[19:-6]
-´´´
+```
 
 ## Movie Quotation
 
