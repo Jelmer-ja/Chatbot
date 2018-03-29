@@ -14,7 +14,7 @@ from gensim.summarization.summarizer import summarize
 from gensim.models.doc2vec import TaggedDocument
 from nltk.corpus import stopwords
 from news_corpus_builder import NewsCorpusGenerator
-
+import re
 
 #Conversations have three stages, 'OPENING', 'MIDDLE', and 'CLOSING' during which the
 #chatbot will respond differently to messages. Currently, the chatbot will greet his conversation partner,
@@ -28,6 +28,7 @@ class Dialogue:
         self.bot = ChatBot("Filmquotes")
         self.bot.set_trainer(ListTrainer)
         filmconvos = import_movielines()
+            #, conversation_iter = import_movielines()
         #also create doc2vec model
         #Code adapted from https://medium.com/scaleabout/a-gentle-introduction-to-doc2vec-db3e8c0cce5e
         #use by calling model.docvecs.most_similar(UNIQUE_ID, topn=5)
@@ -35,10 +36,13 @@ class Dialogue:
         #size = dimensionality of features
         #Iput = TaggedDocument (words,lablels) should be iterable.
         global model
-        model = gensim.models.Doc2Vec.load('FreeksModel')
-            #gensim.models.Doc2Vec()#(documents=conversation_iter,dm=0,size=10)
-        print("Model loading")
+        #print("Model creating")
+        #model = gensim.models.Doc2Vec(documents=conversation_iter,dm=0,size=10)
+        #gensim.models.Doc2Vec.load('FreeksModel')
+        #print("saving model")
+        #model.save('FreeksModel')
         print("\nModel loaded \n")
+        model = gensim.models.Doc2Vec.load('FreeksModel')
         for convo in filmconvos[0:2]:
             self.bot.train(convo)
 
@@ -48,12 +52,23 @@ class Dialogue:
     def add_chat(self,chat):
         self.conversations[chat] = 'OPENING'
 
+
     def get_movie_quote(self, text):
-        tag = "UniqueTag" + str(self.nr_last_tag)
-        self.nr_last_tag += 1
-        model.train(TaggedDocument(text.split(), tag))
-        print(model.docvecs.most_similar(tag))
-        return text
+        #tag = "UniqueTag" + str(self.nr_last_tag+1)
+        #self.nr_last_tag += 1
+        #split_text = text.split()
+        similars = model.docvecs.most_similar(positive=[model.infer_vector(text)])
+        print("most similar: ")
+        print(similars)
+        #positive = [model.infer_vector(doc_words)]
+        #model.train(TaggedDocument(split_text, tag), total_examples=1, epochs=model.iter)
+        #print("tag similar: " + model.docvecs.most_similar(tag))
+        #print("sentence similar: " + model.docvecs.most_similar(text))
+        #for key in linedict:
+        # if linedict[key] not in stop:
+        #        corpus_iter.append(TaggedDocument(linedict[key][:-1].split(),key))
+        # print(corpus_iter)
+        return str(similars[0])
 
     def get_answer(self,text):
         # Get answer from Google
@@ -98,9 +113,28 @@ class Dialogue:
         if (self.conversations[chat] == 'OPENING'):
             response = random.choice(['Hi', 'Hello', 'Hello there!', 'Hey', 'Hi there'])
             self.conversations[chat] = 'MIDDLE'
+            print("Do you listen to this crap?")
+            print(self.get_movie_quote("do you listen to this crap?"))
+            #do you listen to this crap? L862
         elif (self.conversations[chat] == 'MIDDLE'):
+            # check for quotation marks.
+            if ('"' in text):
+                print("I'm recognising a quote!")
+                # QUOTING TIME
+                quote_text = re.findall(r'"([^"]*)"', text)
+                self.answer = "I recognise that you are quoting! \n"
+                tag = self.get_movie_quote(quote_text)
+                print("Tag")
+                print(tag) ('x')
+                print("Tag[0]")
+                print(tag[0])
+                quote = linedict[tag]
+                if (quote_text.lower() == quote.lower()):
+                    response = self.answer + "And you didn't make a mistake!"
+                else:
+                    response = self.answer + "I think you mean the quote: '" + quote + "'"
             # If the message is a general question (not about the bot itself)
-            if ('some news about' in text.lower()):
+            elif ('some news about' in text.lower()):
                 words = text.lower().split()
                 about_index = words.index('about')
                 subject = ''
@@ -136,12 +170,22 @@ def import_movielines():
         conversations = [[n.strip() for n in ast.literal_eval(x[1:])] for x in conversations]
     with open('cornell_movie_dialogs_corpus/movie_lines.txt') as linesf:
         lines = [[x.split('+++$+++')][-1] for x in linesf.readlines()]
+        global linedict
         linedict = dict((x[0][:-1],x[4]) for x in lines)
     final_convos = [[linedict[x] for x in y] for y in conversations]
+
+    #####################################
+    #Only create once, load after saving#
+    #####################################
     #create corpus, possibly check for vocabulary (drop words not in it from sentence)
     #stop = set(stopwords.words('english'))
     #for key in linedict:
-    #    if linedict[key] not in stop:
-    #        corpus_iter.append(TaggedDocument(linedict[key][:-1].split(),key))
+    #    print(key)
+    #    #remove stopwords from sentences
+    #    words = linedict[key].split()
+    #    for word in words:
+    #        if word in stop:
+    #            words.remove(word)
+    #    corpus_iter.append(TaggedDocument(words,key))
     #print(corpus_iter)
-    return final_convos #,corpus_iter
+    return final_convos# ,corpus_iter
