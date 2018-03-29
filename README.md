@@ -6,6 +6,15 @@ We started out with the standard telegram bot as proposed in the assignment. Our
 
 ## Normal Dialogue
 Freek is a rather dramatic chatbot. His standard dialogue interactions are taken from the Cornell Movie Database (Cornell Movie Dialog Corpus). We train our chatbot on this database using the Python package [Chatterbot](https://pypi.python.org/pypi/ChatterBot/0.4.3), which uses naive Bayes classifiers to train the bot for finding the most appropriate responses to the input. 
+```python
+self.conversations = {}
+        self.bot = ChatBot("Filmquotes")
+        self.bot.set_trainer(ListTrainer)
+        filmconvos,conversation_iter = import_movielines()
+        print("Model created")
+        for convo in filmconvos[0:50]:
+            self.bot.train(convo)
+```
 
 ## Basic Question Answering
 Although Freek likes movies a lot, he is not very knowledgeable about anything else. When he is asked a question about himself (e.g. one that includes the word "you") he answers that question the same way he would any other message. However, he refers to Google when he is asked questions that don't refer to him specifically. 
