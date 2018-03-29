@@ -72,9 +72,11 @@ Because Freek knows so much about movies, he likes helping people getting them r
 ```
 The similar should return the tag, which Freek can then cross-reference with his original dictionary used in creating the [TaggedDocuments](https://groups.google.com/forum/#!topic/gensim/V0l4Lukhor4) ([other link](https://radimrehurek.com/gensim/models/doc2vec.html)) needed for the model. However the tags provided by the dictionary 'Lxxxx' are turned into single similarity vectors by the most_similar code and Freek is unable to link this back to the original tags. This unfortunately means that Freek cannot actually complete the movie quotes as intended.
 
-In hindsight this approach was maybe too ambitious as relatively little research has been done using doc2vec and all the research that has been done only compares tags and not text [good paper](https://cs.stanford.edu/~quocle/paragraph_vector.pdf)
+In hindsight this approach was maybe too ambitious as relatively little research has been done using doc2vec and all the research that has been done only compares tags and not text [good paper](https://cs.stanford.edu/~quocle/paragraph_vector.pdf). A workaround could be to use word2vec on each word and summarize the sentence as a sum of the word vectors, however this loses even more context information than the BOW approach we chose (ideally we would have used PV-DM: a Distributed Memory Model of Paragraph Vectors but this made training take too long to be feasable.
 
 ## Notes
 * UTF-8 didn't recognise characters like ('),(è),(,), etc. so we changed these manually before importing the Cornell database. We also had to remove the unicode characters from our news databases.
 
 [this links to the blog by the creator of gensim and might prove usefull if this course ever wants to implement a doc2vec assignment](https://rare-technologies.com/doc2vec-tutorial/)
+
+The current code doesn't work for the quotations, as we have been trying to come up with new solutions until right before the deadline. Unfortunately we were not successfull.
